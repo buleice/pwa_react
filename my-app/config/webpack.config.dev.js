@@ -18,6 +18,29 @@ const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin-alt');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 
+function setup() {
+  const entry = {};
+  const plugins = [];
+  console.log(paths.dirs);
+  Object.keys(paths.dirs).forEach((key) => {
+    entry[key] = [
+      require.resolve('./polyfills'),
+      require.resolve('react-dev-utils/webpackHotDevClient'),
+      `${paths.appSrc}/${key}/index.js`,
+    ]
+
+    const newPlugins = new HtmlWebpackPlugin({
+      chunks: [key],
+      inject: true,
+      template: paths.appHtml,
+      filename: `${key}.html`
+    })
+    plugins.push(newPlugins);
+  })
+  return { entry, plugins }
+}
+
+const Setup = setup();///这里要注意要运行一次！
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // In development, we always serve from the root. This makes config easier.
@@ -83,24 +106,25 @@ module.exports = {
   devtool: 'cheap-module-source-map',
   // These are the "entry points" to our application.
   // This means they will be the "root" imports that are included in JS bundle.
-  entry: [
-    // Include an alternative client for WebpackDevServer. A client's job is to
-    // connect to WebpackDevServer by a socket and get notified about changes.
-    // When you save a file, the client will either apply hot updates (in case
-    // of CSS changes), or refresh the page (in case of JS changes). When you
-    // make a syntax error, this client will display a syntax error overlay.
-    // Note: instead of the default WebpackDevServer client, we use a custom one
-    // to bring better experience for Create React App users. You can replace
-    // the line below with these two lines if you prefer the stock client:
-    // require.resolve('webpack-dev-server/client') + '?/',
-    // require.resolve('webpack/hot/dev-server'),
-    require.resolve('react-dev-utils/webpackHotDevClient'),
-    // Finally, this is your app's code:
-    paths.appIndexJs,
-    // We include the app code last so that if there is a runtime error during
-    // initialization, it doesn't blow up the WebpackDevServer client, and
-    // changing JS code would still trigger a refresh.
-  ],
+  // entry: [
+  //   // Include an alternative client for WebpackDevServer. A client's job is to
+  //   // connect to WebpackDevServer by a socket and get notified about changes.
+  //   // When you save a file, the client will either apply hot updates (in case
+  //   // of CSS changes), or refresh the page (in case of JS changes). When you
+  //   // make a syntax error, this client will display a syntax error overlay.
+  //   // Note: instead of the default WebpackDevServer client, we use a custom one
+  //   // to bring better experience for Create React App users. You can replace
+  //   // the line below with these two lines if you prefer the stock client:
+  //   // require.resolve('webpack-dev-server/client') + '?/',
+  //   // require.resolve('webpack/hot/dev-server'),
+  //   require.resolve('react-dev-utils/webpackHotDevClient'),
+  //   // Finally, this is your app's code:
+  //   paths.appIndexJs,
+  //   // We include the app code last so that if there is a runtime error during
+  //   // initialization, it doesn't blow up the WebpackDevServer client, and
+  //   // changing JS code would still trigger a refresh.
+  // ],
+  entry:Setup.entry,
   output: {
     // Add /* filename */ comments to generated require()s in the output.
     pathinfo: true,
@@ -186,7 +210,7 @@ module.exports = {
             options: {
               formatter: require.resolve('react-dev-utils/eslintFormatter'),
               eslintPath: require.resolve('eslint'),
-              
+
             },
             loader: require.resolve('eslint-loader'),
           },
@@ -219,7 +243,7 @@ module.exports = {
               customize: require.resolve(
                 'babel-preset-react-app/webpack-overrides'
               ),
-              
+
               plugins: [
                 [
                   require.resolve('babel-plugin-named-asset-import'),
@@ -259,7 +283,7 @@ module.exports = {
               cacheDirectory: true,
               // Don't waste time on Gzipping the cache
               cacheCompression: false,
-              
+
               // If an error happens in a package, it's possible to be
               // because it was compiled. Thus, we don't want the browser
               // debugger to show the original code. Instead, the code
@@ -337,15 +361,16 @@ module.exports = {
   },
   plugins: [
     // Generates an `index.html` file with the <script> injected.
-    new HtmlWebpackPlugin({
-      inject: true,
-      template: paths.appHtml,
-    }),
+    // new HtmlWebpackPlugin({
+    //   inject: true,
+    //   template: paths.appHtml,
+    // }),
     // Makes some environment variables available in index.html.
     // The public URL is available as %PUBLIC_URL% in index.html, e.g.:
     // <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     // In development, this will be an empty string.
     new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
+    ...Setup.plugins,
     // This gives some necessary context to module not found errors, such as
     // the requesting resource.
     new ModuleNotFoundPlugin(paths.appPath),
@@ -376,6 +401,7 @@ module.exports = {
       fileName: 'asset-manifest.json',
       publicPath: publicPath,
     }),
+    
     // TypeScript type checking
     useTypeScript &&
       new ForkTsCheckerWebpackPlugin({

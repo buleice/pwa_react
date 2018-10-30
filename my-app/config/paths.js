@@ -22,6 +22,22 @@ function ensureSlash(inputPath, needsSlash) {
   }
 }
 
+/**
+ * 扫描函数
+ */
+function Scan() {
+  const dirs = fs.readdirSync(resolveApp('src/'));
+  const map = {};
+  dirs.forEach((file) => {
+    const state = fs.statSync(resolveApp('src/' + file))
+    if (state.isDirectory()) {
+      map[file] = resolveApp('src/' + file) + '/index.js'
+    }
+  })
+  return map
+}
+const dirs = Scan();
+
 const getPublicUrl = appPackageJson =>
   envPublicUrl || require(appPackageJson).homepage;
 
@@ -82,6 +98,7 @@ module.exports = {
   appNodeModules: resolveApp('node_modules'),
   publicUrl: getPublicUrl(resolveApp('package.json')),
   servedPath: getServedPath(resolveApp('package.json')),
+  dirs
 };
 
 

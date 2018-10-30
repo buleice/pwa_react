@@ -8,6 +8,17 @@ const config = require('./webpack.config.dev');
 const paths = require('./paths');
 const fs = require('fs');
 
+const rewritesPath = (function(){
+  let pathArr = [];
+  Object.keys(paths.dirs).forEach(app=>{
+    pathArr.push(
+      {from: new RegExp('^\/' + app), to: `build/${app}.html`}
+      // 生成示例：{from: /^\/key1/, to: 'build/key1.html'}
+    )
+  });
+  return pathArr;
+})();
+
 const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
 const host = process.env.HOST || '0.0.0.0';
 
